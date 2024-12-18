@@ -1,1 +1,1 @@
-﻿Console.WriteLine("Hello, Tetris!");
+﻿new Tetris.Tetris().Run();
