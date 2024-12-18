@@ -8,7 +8,7 @@ namespace Tetris;
 
 public class Main : GameWindow
 {
-    private const float SQUARE_SIZE = 0.02f;
+    private const float SQUARE_SIZE = 0.04f;
     
     private readonly float[] verticiesBlock = new []
     {
@@ -25,9 +25,10 @@ public class Main : GameWindow
     {
         {0, new Vector3(0.1f, 0.1f, 0.1f)},
         {1, new Vector3(1.0f, 1.0f, 1.0f)},
-        {2, new Vector3(0.0f, 1.0f, 0.0f)},
-        {3, new Vector3(1.0f, 0.0f, 0.0f)},
-        {4, new Vector3(1.0f, 0.0f, 1.0f)},
+        {2, new Vector3(1.0f, 0.0f, 0.0f)},
+        {3, new Vector3(0.0f, 1.0f, 0.0f)},
+        {4, new Vector3(0.0f, 0.0f, 1.0f)},
+        {5, new Vector3(1.0f, 0.0f, 1.0f)},
         {10, new Vector3(0.0f, 0.0f, 0.0f)},
     };
     

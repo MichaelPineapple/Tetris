@@ -7,8 +7,8 @@ namespace Tetris;
 public class Tetris : Main
 {
     private const double TICK_TIME = 0.5f;
-    private const int GRID_WIDTH = 10;
-    private const int GRID_HEIGHT = 20;
+    private const int GRID_WIDTH = 12;
+    private const int GRID_HEIGHT = 22;
     private const int BORDER_COLOR = 10;
     
     private readonly Vector2i SPAWN_LOCATION = (GRID_WIDTH / 2, GRID_HEIGHT - 1);
@@ -62,12 +62,12 @@ public class Tetris : Main
 
     private void OnTick()
     {
-        if (rowStack.Count > 0)
+        while (rowStack.Count > 0)
         {
             int row = rowStack.Pop();
             ShiftDown(row);
         }
-        
+
         bool moveResult = MoveHand(0, -1);
         if (!moveResult)
         { 
@@ -99,15 +99,10 @@ public class Tetris : Main
 
             if (full)
             {
-                SetRow(i, 3);
+                for (int j = 1; j < GRID_WIDTH - 1; j++) Grid[j, i] = 3;
                 rowStack.Push(i);
             }
         }
-    }
-
-    private void SetRow(int _row, int _color)
-    {
-        for (int j = 1; j < GRID_WIDTH - 1; j++) Grid[j, _row] = _color;
     }
     
     private void ShiftDown(int _y)
@@ -125,21 +120,6 @@ public class Tetris : Main
             }
         }
     }
-
-    private void Slam()
-    {
-        bool loop = true;
-        while (loop) loop = MoveHand(0, -1);
-    }
-    
-    private void RotateHand()
-    {
-        handRotation = handRotation + 1;
-        if (handRotation >= handTetrimino.Rotations.Length) handRotation = 0;
-        Vector2i[] blocks = handTetrimino.Rotations[handRotation];
-        Vector2i[] next = applyOffset(blocks, handOffset);
-        UpdateHand(next);
-    }
     
     private void SpawnTetrimino()
     {
@@ -149,11 +129,10 @@ public class Tetris : Main
         if (!UpdateHand(next)) Console.WriteLine("Game Over");
     }
     
-    private Vector2i[] applyOffset(Vector2i[] _input, Vector2i _offset)
+    private void Slam()
     {
-        Vector2i[] output = new Vector2i[_input.Length];
-        for (int i = 0; i < _input.Length; i++) output[i] = (_input[i] + _offset);
-        return output;
+        bool loop = true;
+        while (loop) loop = MoveHand(0, -1);
     }
     
     private bool MoveHand(int _x, int _y)
@@ -163,6 +142,15 @@ public class Tetris : Main
         bool result = UpdateHand(next);
         if (result) handOffset += offset;
         return result;
+    }
+    
+    private void RotateHand()
+    {
+        handRotation = handRotation + 1;
+        if (handRotation >= handTetrimino.Rotations.Length) handRotation = 0;
+        Vector2i[] blocks = handTetrimino.Rotations[handRotation];
+        Vector2i[] next = applyOffset(blocks, handOffset);
+        UpdateHand(next);
     }
 
     private bool UpdateHand(Vector2i[] _next)
@@ -177,13 +165,6 @@ public class Tetris : Main
         SetHand(-handTetrimino.Color);
         return true;
     }
-
-    private bool InBounds(Vector2i _a)
-    {
-        if (_a.X < 0 || _a.X >= GRID_WIDTH) return false;
-        if (_a.Y < 0 || _a.Y >= GRID_HEIGHT) return false;
-        return true;
-    }
     
     private void SetHand(int _val)
     {
@@ -192,5 +173,19 @@ public class Tetris : Main
             Vector2i a = hand[i];
             if (InBounds(a)) Grid[a.X, a.Y] = _val;
         }
+    }
+    
+    private bool InBounds(Vector2i _a)
+    {
+        if (_a.X < 0 || _a.X >= GRID_WIDTH) return false;
+        if (_a.Y < 0 || _a.Y >= GRID_HEIGHT) return false;
+        return true;
+    }
+    
+    private Vector2i[] applyOffset(Vector2i[] _input, Vector2i _offset)
+    {
+        Vector2i[] output = new Vector2i[_input.Length];
+        for (int i = 0; i < _input.Length; i++) output[i] = (_input[i] + _offset);
+        return output;
     }
 }
