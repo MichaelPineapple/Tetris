@@ -16,33 +16,6 @@ public class Mesh
         loadVerticies(_verticies, _shader);
     }
 
-    public Mesh(string _path, Shader _shader)
-    {
-        List<float> verticies = new List<float>();
-        using (StreamReader sr = File.OpenText(_path))
-        {
-            string s = String.Empty;
-            while ((s = sr.ReadLine()) != null)
-            {
-                if (s.Trim().Length > 0)
-                {
-                    string[] split = s.Split(',');
-                    for (int i = 0; i < split.Length; i++)
-                    {
-                        string v = split[i].Trim();
-                        if (v.Length > 0)
-                        {
-                            verticies.Add(float.Parse(v));
-                        }
-                    }
-                }
-            }
-        }
-
-        float[] vertArray = verticies.ToArray();
-        loadVerticies(vertArray, _shader);
-    }
-
     private void loadVerticies(float[] _verticies, Shader _shader)
     {
         vertexCount = _verticies.Length;
