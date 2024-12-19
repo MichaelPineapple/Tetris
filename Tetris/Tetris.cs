@@ -166,11 +166,11 @@ public class Tetris : Engine
     
     private void RotateHand()
     {
-        handRotation = handRotation + 1;
+        handRotation++;
         if (handRotation >= handTetrimino.Rotations.Length) handRotation = 0;
         Vector2i[] blocks = handTetrimino.Rotations[handRotation];
         Vector2i[] next = applyOffset(blocks, handOffset);
-        UpdateHand(next);
+        if (!UpdateHand(next)) handRotation--;
     }
 
     private bool UpdateHand(Vector2i[] _next)
