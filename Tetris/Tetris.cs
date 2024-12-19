@@ -4,7 +4,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Tetris;
 
-public class Tetris : Main
+public class Tetris : Engine
 {
     private const double TICK_TIME = 0.5f;
     private const int GRID_WIDTH = 12;
@@ -14,6 +14,7 @@ public class Tetris : Main
     private readonly Vector2i SPAWN_LOCATION = (GRID_WIDTH / 2, GRID_HEIGHT - 1);
     
     private double timer;
+    private Random rnd = new Random();
     private Stack<int> rowStack = new Stack<int>();
     
     private Vector2i[] hand = [];
@@ -123,10 +124,16 @@ public class Tetris : Main
     
     private void SpawnTetrimino()
     {
-        handTetrimino = TetriminoLibrary.GET_RANDOM();
+        handTetrimino = GetRandomTetrimino();
         Vector2i[] blocks = handTetrimino.Rotations[0];
         Vector2i[] next = applyOffset(blocks, handOffset);
         if (!UpdateHand(next)) Console.WriteLine("Game Over");
+    }
+    
+    private Tetrimino GetRandomTetrimino()
+    {
+        int rndIndex = rnd.Next(0, Tetriminos.Length);
+        return Tetriminos[rndIndex];
     }
     
     private void Slam()
@@ -187,5 +194,51 @@ public class Tetris : Main
         Vector2i[] output = new Vector2i[_input.Length];
         for (int i = 0; i < _input.Length; i++) output[i] = (_input[i] + _offset);
         return output;
+    }
+    
+    private struct Tetrimino
+    {
+        public int Color;
+        public Vector2i[][] Rotations;
+    
+        public Tetrimino(int _color, params Vector2i[][] _rotations)
+        {
+            Color = _color;
+            Rotations = _rotations;
+        }
+    }
+    
+    // Tetriminos
+    private readonly Tetrimino[] Tetriminos = new []
+    {
+        // Square
+        new Tetrimino(5,
+            new Vector2i[]{(-1, 0), (-1, 1), (0, 0), (0, 1)}
+        ),
+            
+        // Long
+        new Tetrimino(5,
+            new Vector2i[]{(0, -1), (0, 0), (0, 1), (0, 2)},
+            new Vector2i[]{(-1, 0), (0, 0), (1, 0), (2, 0)}
+        ),
+        
+        // T
+        new Tetrimino(5,
+            new Vector2i[]{(-1, 0), (0, 0), (1, 0), (0, -1)},
+            new Vector2i[]{(0, 1), (0, 0), (0, -1), (1, 0)},
+            new Vector2i[]{(-1, 0), (0, 0), (1, 0), (0, 1)},
+            new Vector2i[]{(0, 1), (0, 0), (0, -1), (-1, 0)}
+        ),
+        
+        // L
+        new Tetrimino(5,
+            new Vector2i[]{(-1, 1), (-1, 0), (-1, -1), (0, -1)},
+            new Vector2i[]{(0, 1), (0, 0), (0, -1), (-1, -1)}
+        ),
+    };
+    
+    public static void Main(String[] args)
+    {
+        new Tetris().Run();
     }
 }
