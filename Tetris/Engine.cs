@@ -22,12 +22,15 @@ public class Engine : GameWindow
     
     private readonly Dictionary<int, Vector3> COLOR_MAP = new Dictionary<int, Vector3>()
     {
-        {00, new Vector3(0.1f, 0.1f, 0.1f)},
-        {01, new Vector3(1.0f, 1.0f, 1.0f)},
-        {02, new Vector3(1.0f, 0.0f, 0.0f)},
-        {03, new Vector3(0.0f, 1.0f, 0.0f)},
-        {04, new Vector3(0.0f, 0.0f, 1.0f)},
-        {05, new Vector3(1.0f, 0.0f, 1.0f)},
+        {00, new Vector3(0.05f, 0.05f, 0.05f)},
+        {01, new Vector3(0.7f, 0.7f, 0.7f)},
+        {02, new Vector3(0.7f, 0.7f, 0.0f)},
+        {03, new Vector3(0.0f, 0.5f, 0.7f)},
+        {04, new Vector3(0.5f, 0.0f, 0.7f)},
+        {05, new Vector3(0.7f, 0.2f, 0.0f)},
+        {06, new Vector3(0.0f, 0.0f, 1.0f)},
+        {07, new Vector3(0.7f, 0.0f, 0.0f)},
+        {08, new Vector3(0.0f, 0.7f, 0.0f)},
         {10, new Vector3(0.0f, 0.0f, 0.0f)},
     };
 

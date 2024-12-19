@@ -14,8 +14,10 @@ public class Tetris : Engine
     private readonly Vector2i SPAWN_LOCATION = (GRID_WIDTH / 2, GRID_HEIGHT - 1);
     
     private double timer;
+    private double clearEffectTimer;
     private Random rnd = new Random();
     private Stack<int> rowStack = new Stack<int>();
+    private int score;
     
     private Vector2i[] hand = [];
     private Vector2i handOffset;
@@ -47,7 +49,6 @@ public class Tetris : Engine
         base.OnUpdateFrame(e);
 
         if (KeyboardState.IsKeyDown(Keys.Escape)) Close();
-
         if (KeyboardState.IsKeyPressed(Keys.Left)) MoveHand(-1, 0);
         if (KeyboardState.IsKeyPressed(Keys.Right)) MoveHand(1, 0);
         if (KeyboardState.IsKeyPressed(Keys.Up)) RotateHand();
@@ -59,26 +60,30 @@ public class Tetris : Engine
             OnTick();
             timer = 0.0f;
         }
+
+        if (clearEffectTimer > 0) clearEffectTimer -= e.Time;
+        else
+        {
+            while (rowStack.Count > 0) ShiftDown(rowStack.Pop());
+        }
     }
 
     private void OnTick()
     {
-        while (rowStack.Count > 0)
-        {
-            int row = rowStack.Pop();
-            ShiftDown(row);
-        }
-
-        bool moveResult = MoveHand(0, -1);
-        if (!moveResult)
+        if (!MoveHand(0, -1))
         { 
-            SetHand(1);
-            ResetHand();
-            CheckRows();
-            SpawnTetrimino();
+            PlaceHand();
         }
     }
 
+    private void PlaceHand()
+    {
+        SetHand(handTetrimino.Color);
+        ResetHand();
+        CheckRows();
+        SpawnTetrimino();
+    }
+    
     private void ResetHand()
     {
         hand = new Vector2i[0];
@@ -100,8 +105,10 @@ public class Tetris : Engine
 
             if (full)
             {
-                for (int j = 1; j < GRID_WIDTH - 1; j++) Grid[j, i] = 3;
+                for (int j = 1; j < GRID_WIDTH - 1; j++) Grid[j, i] = 1;
                 rowStack.Push(i);
+                score++;
+                clearEffectTimer = 0.25f;
             }
         }
     }
@@ -127,19 +134,19 @@ public class Tetris : Engine
         handTetrimino = GetRandomTetrimino();
         Vector2i[] blocks = handTetrimino.Rotations[0];
         Vector2i[] next = applyOffset(blocks, handOffset);
-        if (!UpdateHand(next)) Console.WriteLine("Game Over");
-    }
-    
-    private Tetrimino GetRandomTetrimino()
-    {
-        int rndIndex = rnd.Next(0, Tetriminos.Length);
-        return Tetriminos[rndIndex];
+        if (!UpdateHand(next))
+        {
+            Console.WriteLine("Game Over\nScore: "+score);
+            Thread.Sleep(2000);
+            Close();
+        }
     }
     
     private void Slam()
     {
         bool loop = true;
         while (loop) loop = MoveHand(0, -1);
+        PlaceHand();
     }
     
     private bool MoveHand(int _x, int _y)
@@ -196,6 +203,13 @@ public class Tetris : Engine
         return output;
     }
     
+    private Tetrimino GetRandomTetrimino()
+    {
+        int rndIndex = rnd.Next(0, Tetriminos.Length);
+        //rndIndex = 6;
+        return Tetriminos[rndIndex];
+    }
+    
     private struct Tetrimino
     {
         public int Color;
@@ -212,28 +226,50 @@ public class Tetris : Engine
     private readonly Tetrimino[] Tetriminos = new []
     {
         // Square
-        new Tetrimino(5,
+        new Tetrimino(2,
             new Vector2i[]{(-1, 0), (-1, 1), (0, 0), (0, 1)}
         ),
             
         // Long
-        new Tetrimino(5,
+        new Tetrimino(3,
             new Vector2i[]{(0, -1), (0, 0), (0, 1), (0, 2)},
             new Vector2i[]{(-1, 0), (0, 0), (1, 0), (2, 0)}
         ),
         
         // T
-        new Tetrimino(5,
+        new Tetrimino(4,
             new Vector2i[]{(-1, 0), (0, 0), (1, 0), (0, -1)},
             new Vector2i[]{(0, 1), (0, 0), (0, -1), (1, 0)},
             new Vector2i[]{(-1, 0), (0, 0), (1, 0), (0, 1)},
             new Vector2i[]{(0, 1), (0, 0), (0, -1), (-1, 0)}
         ),
         
-        // L
+        // L1
         new Tetrimino(5,
             new Vector2i[]{(-1, 1), (-1, 0), (-1, -1), (0, -1)},
-            new Vector2i[]{(0, 1), (0, 0), (0, -1), (-1, -1)}
+            new Vector2i[]{(-1, 0), (0, 0), (1, 0), (1, 1)},
+            new Vector2i[]{(0, 1), (0, 0), (0, -1), (-1, 1)},
+            new Vector2i[]{(-1, 1), (0, 1), (1, 1), (-1, 0)}
+        ),
+        
+        // L2
+        new Tetrimino(6,
+            new Vector2i[]{(0, 1), (0, 0), (0, -1), (-1, -1)},
+            new Vector2i[]{(-1, 0), (0, 0), (1, 0), (-1, 1)},
+            new Vector2i[]{(0, 1), (0, 0), (0, -1), (1, 1)},
+            new Vector2i[]{(-1, 1), (0, 1), (1, 1), (1, 0)}
+        ),
+        
+        // S1
+        new Tetrimino(7,
+            new Vector2i[]{(-1, 1), (0, 1), (0, 0), (1, 0)},
+            new Vector2i[]{(1, 2), (1, 1), (0, 1), (0, 0)}
+        ),
+        
+        // S2
+        new Tetrimino(8,
+            new Vector2i[]{(-1, 0), (0, 0), (0, 1), (1, 1)},
+            new Vector2i[]{(-1, 2), (-1, 1), (0, 1), (0, 0)}
         ),
     };
     
