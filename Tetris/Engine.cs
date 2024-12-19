@@ -67,7 +67,7 @@ public class Engine : GameWindow
     private void CreateShader()
     {
         const string vertexShaderSource =
-            "#version 330 core " +
+            "#version 330 core \n" +
             "in vec2 vert;" +
             "uniform mat4 model;" +
             "void main(){" +
@@ -75,7 +75,7 @@ public class Engine : GameWindow
             "}";
 
         const string fragmentShaderSource =
-            "#version 330 core " +
+            "#version 330 core \n" +
             "out vec4 FragColor;" +
             "uniform vec3 color;" +
             "void main(){" +

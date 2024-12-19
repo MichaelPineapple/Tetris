@@ -18,6 +18,7 @@ public class Tetris : Engine
     private Random rnd = new Random();
     private Stack<int> rowStack = new Stack<int>();
     private int score;
+    private bool paused;
     
     private Vector2i[] hand = [];
     private Vector2i handOffset;
@@ -49,6 +50,11 @@ public class Tetris : Engine
         base.OnUpdateFrame(e);
 
         if (KeyboardState.IsKeyDown(Keys.Escape)) Close();
+
+        if (KeyboardState.IsKeyPressed(Keys.P)) paused = !paused;
+        
+        if (paused) return;
+        
         if (KeyboardState.IsKeyPressed(Keys.Left)) MoveHand(-1, 0);
         if (KeyboardState.IsKeyPressed(Keys.Right)) MoveHand(1, 0);
         if (KeyboardState.IsKeyPressed(Keys.Up)) RotateHand();
@@ -86,7 +92,7 @@ public class Tetris : Engine
     
     private void ResetHand()
     {
-        hand = new Vector2i[0];
+        hand = [];
         handOffset = SPAWN_LOCATION;
         handRotation = 0;
         handTetrimino = new Tetrimino(0);
@@ -136,9 +142,9 @@ public class Tetris : Engine
         Vector2i[] next = applyOffset(blocks, handOffset);
         if (!UpdateHand(next))
         {
-            Console.WriteLine("Game Over\nScore: "+score);
-            Thread.Sleep(2000);
-            Close();
+            Console.WriteLine("Game Over");
+            Console.WriteLine("Score: "+score);
+            paused = true;
         }
     }
     
@@ -223,55 +229,55 @@ public class Tetris : Engine
     }
     
     // Tetriminos
-    private readonly Tetrimino[] Tetriminos = new []
-    {
+    private readonly Tetrimino[] Tetriminos =
+    [
         // Square
         new Tetrimino(2,
-            new Vector2i[]{(-1, 0), (-1, 1), (0, 0), (0, 1)}
+            [(-1, 0), (-1, 1), (0, 0), (0, 1)]
         ),
             
         // Long
         new Tetrimino(3,
-            new Vector2i[]{(0, -1), (0, 0), (0, 1), (0, 2)},
-            new Vector2i[]{(-1, 0), (0, 0), (1, 0), (2, 0)}
+            [(0, -1), (0, 0), (0, 1), (0, 2)],
+            [(-1, 0), (0, 0), (1, 0), (2, 0)]
         ),
         
         // T
         new Tetrimino(4,
-            new Vector2i[]{(-1, 0), (0, 0), (1, 0), (0, -1)},
-            new Vector2i[]{(0, 1), (0, 0), (0, -1), (1, 0)},
-            new Vector2i[]{(-1, 0), (0, 0), (1, 0), (0, 1)},
-            new Vector2i[]{(0, 1), (0, 0), (0, -1), (-1, 0)}
+            [(-1, 0), (0, 0), (1, 0), (0, -1)],
+            [(0, 1), (0, 0), (0, -1), (1, 0)],
+            [(-1, 0), (0, 0), (1, 0), (0, 1)],
+            [(0, 1), (0, 0), (0, -1), (-1, 0)]
         ),
         
         // L1
         new Tetrimino(5,
-            new Vector2i[]{(-1, 1), (-1, 0), (-1, -1), (0, -1)},
-            new Vector2i[]{(-1, 0), (0, 0), (1, 0), (1, 1)},
-            new Vector2i[]{(0, 1), (0, 0), (0, -1), (-1, 1)},
-            new Vector2i[]{(-1, 1), (0, 1), (1, 1), (-1, 0)}
+            [(-1, 1), (-1, 0), (-1, -1), (0, -1)],
+            [(-1, 0), (0, 0), (1, 0), (1, 1)],
+            [(0, 1), (0, 0), (0, -1), (-1, 1)],
+            [(-1, 1), (0, 1), (1, 1), (-1, 0)]
         ),
         
         // L2
         new Tetrimino(6,
-            new Vector2i[]{(0, 1), (0, 0), (0, -1), (-1, -1)},
-            new Vector2i[]{(-1, 0), (0, 0), (1, 0), (-1, 1)},
-            new Vector2i[]{(0, 1), (0, 0), (0, -1), (1, 1)},
-            new Vector2i[]{(-1, 1), (0, 1), (1, 1), (1, 0)}
+            [(0, 1), (0, 0), (0, -1), (-1, -1)],
+            [(-1, 0), (0, 0), (1, 0), (-1, 1)],
+            [(0, 1), (0, 0), (0, -1), (1, 1)],
+            [(-1, 1), (0, 1), (1, 1), (1, 0)]
         ),
         
         // S1
         new Tetrimino(7,
-            new Vector2i[]{(-1, 1), (0, 1), (0, 0), (1, 0)},
-            new Vector2i[]{(1, 2), (1, 1), (0, 1), (0, 0)}
+            [(-1, 1), (0, 1), (0, 0), (1, 0)],
+            [(1, 2), (1, 1), (0, 1), (0, 0)]
         ),
         
         // S2
         new Tetrimino(8,
-            new Vector2i[]{(-1, 0), (0, 0), (0, 1), (1, 1)},
-            new Vector2i[]{(-1, 2), (-1, 1), (0, 1), (0, 0)}
-        ),
-    };
+            [(-1, 0), (0, 0), (0, 1), (1, 1)],
+            [(-1, 2), (-1, 1), (0, 1), (0, 0)]
+        )
+    ];
     
     public static void Main(String[] args)
     {
