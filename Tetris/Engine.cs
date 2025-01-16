@@ -36,7 +36,10 @@ public class Engine : GameWindow
 
     private int shaderDefault;
     private int blockVAO;
+    
     private int ulColor;
+    private int ulModel;
+    private int ulProjj;
     
     private readonly int gridWidth;
     private readonly int gridHeight;
@@ -62,6 +65,8 @@ public class Engine : GameWindow
         CreateBlockVAO();
         
         ulColor = GL.GetUniformLocation(shaderDefault, "color");
+        ulModel = GL.GetUniformLocation(shaderDefault, "model");
+        ulProjj = GL.GetUniformLocation(shaderDefault, "projj");
     }
     
     private void CreateShader()
@@ -70,8 +75,9 @@ public class Engine : GameWindow
             "#version 330 core \n" +
             "in vec2 vert;" +
             "uniform mat4 model;" +
+            "uniform mat4 projj;" +
             "void main(){" +
-            "gl_Position = vec4(vert, 0.0, 1.0) * model;" +
+            "gl_Position = vec4(vert, 0.0, 1.0) * model * projj;" +
             "}";
 
         const string fragmentShaderSource =
@@ -133,6 +139,10 @@ public class Engine : GameWindow
         GL.Clear(ClearBufferMask.ColorBufferBit);
         GL.UseProgram(shaderDefault);
         
+        float aspectRatio = Size.X / (float)Size.Y;
+        Matrix4 proj = Matrix4.CreateOrthographicOffCenter(-aspectRatio, aspectRatio, -1.0f, 1.0f, 1.0f, -1.0f);
+        GL.UniformMatrix4(ulProjj, true, ref proj);
+        
         for (int i = 0; i < gridWidth; i++)
         {
             for (int j = 0; j < gridHeight; j++) RenderBlock(i, j);
@@ -148,8 +158,8 @@ public class Engine : GameWindow
         Vector3 pos = new Vector3(_x - gridHalfWidth, _y - gridHalfHeight, 0.0f); 
         pos *= (SQUARE_SIZE * 2.25f);
         Matrix4 model = Matrix4.CreateTranslation(pos);
-        int location = GL.GetUniformLocation(shaderDefault, "model");
-        GL.UniformMatrix4(location, true, ref model);
+        
+        GL.UniformMatrix4(ulModel, true, ref model);
         GL.Uniform3(ulColor, color);
         GL.BindVertexArray(blockVAO);
         GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
