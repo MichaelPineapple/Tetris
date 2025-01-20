@@ -2,6 +2,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Audio.OpenAL;
 
 namespace Tetris;
 
@@ -40,11 +41,13 @@ public class Engine : GameWindow
     private int ulColor;
     private int ulModel;
     private int ulProjj;
+
+    private int idSoundFunky;
     
     private readonly int gridWidth;
     private readonly int gridHeight;
-    private readonly int gridHalfWidth;
-    private readonly int gridHalfHeight;
+    private readonly float gridHalfWidth;
+    private readonly float gridHalfHeight;
     
     protected int[,] Grid;
     
@@ -52,8 +55,8 @@ public class Engine : GameWindow
     {
         gridWidth = _gridWidth;
         gridHeight = _gridHeight;
-        gridHalfWidth = gridWidth / 2;
-        gridHalfHeight = gridHeight / 2;
+        gridHalfWidth = gridWidth / 2.0f;
+        gridHalfHeight = gridHeight / 2.0f;
         Grid = new int[gridWidth,gridHeight];
     }
     
@@ -67,6 +70,11 @@ public class Engine : GameWindow
         ulColor = GL.GetUniformLocation(shaderDefault, "color");
         ulModel = GL.GetUniformLocation(shaderDefault, "model");
         ulProjj = GL.GetUniformLocation(shaderDefault, "projj");
+        
+        InitializeAudio();
+        
+        var soundData = CreateFunkySound();
+        idSoundFunky = LoadSound(soundData.Item1, soundData.Item2);
     }
     
     private void CreateShader()
@@ -156,7 +164,8 @@ public class Engine : GameWindow
         int v = Math.Abs(Grid[_x, _y]);
         Vector3 color = COLOR_MAP[v];
         Vector3 pos = new Vector3(_x - gridHalfWidth, _y - gridHalfHeight, 0.0f); 
-        pos *= (SQUARE_SIZE * 2.25f);
+        const float offset = (SQUARE_SIZE * 2.25f);
+        pos *= offset;
         Matrix4 model = Matrix4.CreateTranslation(pos);
         
         GL.UniformMatrix4(ulModel, true, ref model);
@@ -174,5 +183,51 @@ public class Engine : GameWindow
     protected override void OnUnload()
     {
         GL.DeleteProgram(shaderDefault);
+        AL.DeleteSource(idSoundFunky);
+        ShutdownAudio();
+    }
+
+    protected void PlayFunkySound()
+    {
+        AL.SourcePlay(idSoundFunky);
+    }
+    
+    private (short[], int) CreateFunkySound()
+    {
+        int freq0 = 220;
+        int sampleRate = 44100;
+        short[] data = new short[4410];
+        for (int i = 0; i < data.Length; i++)
+        {
+            data[i] = (short)(MathF.Sin((i * freq0 * MathF.PI * 2) / sampleRate) * short.MaxValue);
+        }
+        return (data, 44100);
+    }
+    
+    protected int LoadSound(short[] _data, int _freq)
+    {
+        int buffer = AL.GenBuffer();
+        int source = AL.GenSource();
+        AL.BufferData(buffer, ALFormat.Mono16, ref _data[0], _data.Length * sizeof(short), _freq);
+        AL.Source(source, ALSourcei.Buffer, buffer);
+        AL.Source(source, ALSourcef.Gain, 1.0f);
+        AL.DeleteBuffer(buffer);
+        return source;
+    }
+    
+    private void InitializeAudio()
+    {
+        ALDevice device = ALC.OpenDevice(null);
+        ALContext context = ALC.CreateContext(device, (int[])null);
+        ALC.MakeContextCurrent(context);
+    }
+    
+    private void ShutdownAudio()
+    {
+        ALContext context = ALC.GetCurrentContext();
+        ALDevice device = ALC.GetContextsDevice(context);
+        ALC.MakeContextCurrent(ALContext.Null);
+        ALC.DestroyContext(context);
+        ALC.CloseDevice(device);
     }
 }

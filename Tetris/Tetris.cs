@@ -28,8 +28,9 @@ public class Tetris : Engine
     public Tetris() : base(GRID_WIDTH, GRID_HEIGHT)
     {
         Console.WriteLine("Hello, Tetris!");
-        Size = (1000, 1000);
+        Size = (700, 700);
         Title = "Tetris";
+        UpdateFrequency = 30.0;
         GenerateGridBorder();
         ResetHand();
         SpawnTetrimino();
@@ -55,8 +56,8 @@ public class Tetris : Engine
         
         if (paused) return;
         
-        if (KeyboardState.IsKeyPressed(Keys.Left)) MoveHand(-1, 0);
-        if (KeyboardState.IsKeyPressed(Keys.Right)) MoveHand(1, 0);
+        if (KeyboardState.IsKeyPressed(Keys.Left)) ManuallyMoveHand(-1);
+        if (KeyboardState.IsKeyPressed(Keys.Right)) ManuallyMoveHand(1);
         if (KeyboardState.IsKeyPressed(Keys.Up)) RotateHand();
         if (KeyboardState.IsKeyPressed(Keys.Down)) Slam();
         
@@ -76,10 +77,7 @@ public class Tetris : Engine
 
     private void OnTick()
     {
-        if (!MoveHand(0, -1))
-        { 
-            PlaceHand();
-        }
+        if (!MoveHand(0, -1)) PlaceHand();
     }
 
     private void PlaceHand()
@@ -142,7 +140,7 @@ public class Tetris : Engine
         Vector2i[] next = applyOffset(blocks, handOffset);
         if (!UpdateHand(next))
         {
-            Console.WriteLine("Game Over");
+            Console.WriteLine("GAME OVER");
             Console.WriteLine("Score: "+score);
             paused = true;
         }
@@ -150,6 +148,7 @@ public class Tetris : Engine
     
     private void Slam()
     {
+        PlayFunkySound();
         bool loop = true;
         while (loop) loop = MoveHand(0, -1);
         PlaceHand();
@@ -162,6 +161,11 @@ public class Tetris : Engine
         bool result = UpdateHand(next);
         if (result) handOffset += offset;
         return result;
+    }
+
+    private void ManuallyMoveHand(int _x)
+    {
+        MoveHand(_x, 0);
     }
     
     private void RotateHand()
@@ -212,7 +216,6 @@ public class Tetris : Engine
     private Tetrimino GetRandomTetrimino()
     {
         int rndIndex = rnd.Next(0, Tetriminos.Length);
-        //rndIndex = 6;
         return Tetriminos[rndIndex];
     }
     
@@ -278,7 +281,7 @@ public class Tetris : Engine
             [(-1, 2), (-1, 1), (0, 1), (0, 0)]
         )
     ];
-    
+
     public static void Main(String[] args)
     {
         new Tetris().Run();
