@@ -73,8 +73,9 @@ public class Engine : GameWindow
         
         InitializeAudio();
         
-        string? appPath = Path.GetDirectoryName(Environment.ProcessPath) + "/../../../";
-        idSoundMusic = LoadAudio(appPath + "Audio/Tetris4Mcl.wav");
+        string? appPath = Path.GetDirectoryName(Environment.ProcessPath);
+        appPath += "/../../.."; // Remove when building for release.
+        idSoundMusic = LoadAudio(appPath + "/Audio/Tetris4Mcl.wav");
         AL.Source(idSoundMusic, ALSourceb.Looping, true);
         AL.SourcePlay(idSoundMusic);
     }
