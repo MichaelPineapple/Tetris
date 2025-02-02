@@ -148,7 +148,6 @@ public class Tetris : Engine
     
     private void Slam()
     {
-        PlayFunkySound();
         bool loop = true;
         while (loop) loop = MoveHand(0, -1);
         PlaceHand();

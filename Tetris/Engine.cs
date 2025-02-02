@@ -23,7 +23,7 @@ public class Engine : GameWindow
     
     private readonly Dictionary<int, Vector3> COLOR_MAP = new Dictionary<int, Vector3>()
     {
-        {00, new Vector3(0.05f, 0.05f, 0.05f)},
+        {00, new Vector3(0.07f, 0.07f, 0.07f)},
         {01, new Vector3(0.7f, 0.7f, 0.7f)},
         {02, new Vector3(0.7f, 0.7f, 0.0f)},
         {03, new Vector3(0.0f, 0.5f, 0.7f)},
@@ -42,7 +42,7 @@ public class Engine : GameWindow
     private int ulModel;
     private int ulProjj;
 
-    private int idSoundFunky;
+    private int idSoundMusic;
     
     private readonly int gridWidth;
     private readonly int gridHeight;
@@ -73,8 +73,10 @@ public class Engine : GameWindow
         
         InitializeAudio();
         
-        var soundData = CreateFunkySound();
-        idSoundFunky = LoadSound(soundData.Item1, soundData.Item2);
+        string? appPath = Path.GetDirectoryName(Environment.ProcessPath) + "/../../../";
+        idSoundMusic = LoadAudio(appPath + "Audio/Tetris4Mcl.wav");
+        AL.Source(idSoundMusic, ALSourceb.Looping, true);
+        AL.SourcePlay(idSoundMusic);
     }
     
     private void CreateShader()
@@ -163,7 +165,7 @@ public class Engine : GameWindow
     {
         int v = Math.Abs(Grid[_x, _y]);
         Vector3 color = COLOR_MAP[v];
-        Vector3 pos = new Vector3(_x - gridHalfWidth, _y - gridHalfHeight, 0.0f); 
+        Vector3 pos = new Vector3((_x + 0.5f) - gridHalfWidth, _y - gridHalfHeight, 0.0f); 
         const float offset = (SQUARE_SIZE * 2.25f);
         pos *= offset;
         Matrix4 model = Matrix4.CreateTranslation(pos);
@@ -183,38 +185,10 @@ public class Engine : GameWindow
     protected override void OnUnload()
     {
         GL.DeleteProgram(shaderDefault);
-        AL.DeleteSource(idSoundFunky);
+        AL.DeleteSource(idSoundMusic);
         ShutdownAudio();
     }
 
-    protected void PlayFunkySound()
-    {
-        AL.SourcePlay(idSoundFunky);
-    }
-    
-    private (short[], int) CreateFunkySound()
-    {
-        int freq0 = 220;
-        int sampleRate = 44100;
-        short[] data = new short[4410];
-        for (int i = 0; i < data.Length; i++)
-        {
-            data[i] = (short)(MathF.Sin((i * freq0 * MathF.PI * 2) / sampleRate) * short.MaxValue);
-        }
-        return (data, 44100);
-    }
-    
-    protected int LoadSound(short[] _data, int _freq)
-    {
-        int buffer = AL.GenBuffer();
-        int source = AL.GenSource();
-        AL.BufferData(buffer, ALFormat.Mono16, ref _data[0], _data.Length * sizeof(short), _freq);
-        AL.Source(source, ALSourcei.Buffer, buffer);
-        AL.Source(source, ALSourcef.Gain, 1.0f);
-        AL.DeleteBuffer(buffer);
-        return source;
-    }
-    
     private void InitializeAudio()
     {
         ALDevice device = ALC.OpenDevice(null);
@@ -229,5 +203,55 @@ public class Engine : GameWindow
         ALC.MakeContextCurrent(ALContext.Null);
         ALC.DestroyContext(context);
         ALC.CloseDevice(device);
+    }
+
+    private int LoadAudio(string _filename)
+    {
+        const string EX = "Invalid file format!";
+        
+        FileStream stream = File.Open(_filename, FileMode.Open);
+        BinaryReader reader = new BinaryReader(stream);
+        
+        string signature = new string(reader.ReadChars(4));
+        if (signature != "RIFF") throw new NotSupportedException(EX);
+
+        reader.ReadInt32();
+
+        string format = new string(reader.ReadChars(4));
+        if (format != "WAVE") throw new NotSupportedException(EX);
+            
+        string format_signature = new string(reader.ReadChars(4));
+        if (format_signature != "fmt ") throw new NotSupportedException(EX);
+
+        reader.ReadInt32();
+        reader.ReadInt16();
+        int num_channels = reader.ReadInt16();
+        int sample_rate = reader.ReadInt32();
+        reader.ReadInt32();
+        reader.ReadInt16();
+        int bits_per_sample = reader.ReadInt16();
+        
+        string data_signature = new string(reader.ReadChars(4));
+        if (data_signature != "data") throw new NotSupportedException(EX);
+
+        reader.ReadInt32();
+
+        ALFormat soundFormat;
+        switch (num_channels)
+        {
+            case 1: soundFormat = (bits_per_sample == 8 ? ALFormat.Mono8 : ALFormat.Mono16); break;
+            case 2: soundFormat = (bits_per_sample == 8 ? ALFormat.Stereo8 : ALFormat.Stereo16); break;
+            default: throw new NotSupportedException(EX);
+        }
+
+        byte[] data = reader.ReadBytes((int)reader.BaseStream.Length);
+        
+        int buffer = AL.GenBuffer();
+        int source = AL.GenSource();
+        AL.BufferData(buffer, soundFormat, ref data[0], data.Length * sizeof(byte), sample_rate);
+        AL.Source(source, ALSourcei.Buffer, buffer);
+        AL.DeleteBuffer(buffer);
+        
+        return source;
     }
 }
