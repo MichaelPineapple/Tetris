@@ -51,6 +51,8 @@ public class Engine : GameWindow
     
     protected int[,] Grid;
     
+    private float aspectRatio;
+    
     public Engine(int _gridWidth, int _gridHeight) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
     {
         gridWidth = _gridWidth;
@@ -65,6 +67,8 @@ public class Engine : GameWindow
         base.OnLoad();
         
         CreateShader();
+        GL.UseProgram(shaderDefault);
+        
         CreateBlockVAO();
         
         ulColor = GL.GetUniformLocation(shaderDefault, "color");
@@ -148,9 +152,7 @@ public class Engine : GameWindow
     {
         base.OnRenderFrame(e);
         GL.Clear(ClearBufferMask.ColorBufferBit);
-        GL.UseProgram(shaderDefault);
         
-        float aspectRatio = Size.X / (float)Size.Y;
         Matrix4 proj = Matrix4.CreateOrthographicOffCenter(-aspectRatio, aspectRatio, -1.0f, 1.0f, 1.0f, -1.0f);
         GL.UniformMatrix4(ulProjj, true, ref proj);
         
@@ -181,6 +183,7 @@ public class Engine : GameWindow
     {
         base.OnFramebufferResize(e);
         GL.Viewport(0, 0, e.Width, e.Height);
+        aspectRatio = Size.X / (float)Size.Y;
     }
     
     protected override void OnUnload()
