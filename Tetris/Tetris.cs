@@ -31,7 +31,13 @@ public class Tetris : Engine
         ResetHand();
         SpawnTetrimino();
         win.FuncUpdate = OnUpdate;
+    }
+
+    public void Run()
+    {
         win.Run();
+        Console.WriteLine("GAME OVER");
+        Console.WriteLine("Score: "+score);
     }
 
     private void GenerateGridBorder()
@@ -135,12 +141,7 @@ public class Tetris : Engine
         handTetrimino = GetRandomTetrimino();
         Vector2i[] blocks = handTetrimino.Rotations[0];
         Vector2i[] next = applyOffset(blocks, handOffset);
-        if (!UpdateHand(next))
-        {
-            Console.WriteLine("GAME OVER");
-            Console.WriteLine("Score: "+score);
-            paused = true;
-        }
+        if (!UpdateHand(next)) paused = true;
     }
     
     private void Slam()
@@ -280,6 +281,6 @@ public class Tetris : Engine
 
     public static void Main(String[] args)
     {
-        _ = new Tetris();
+        new Tetris().Run();
     }
 }
