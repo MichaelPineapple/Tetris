@@ -70,6 +70,7 @@ public class Engine : GameWindow
         GL.UseProgram(shaderDefault);
         
         CreateBlockVAO();
+        GL.BindVertexArray(blockVAO);
         
         ulColor = GL.GetUniformLocation(shaderDefault, "color");
         ulModel = GL.GetUniformLocation(shaderDefault, "model");
@@ -175,7 +176,6 @@ public class Engine : GameWindow
         
         GL.UniformMatrix4(ulModel, true, ref model);
         GL.Uniform3(ulColor, color);
-        GL.BindVertexArray(blockVAO);
         GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
     }
         
