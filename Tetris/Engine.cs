@@ -1,25 +1,19 @@
+using MclTK;
+using MclTK.Audio;
+using MclTK.Graphics;
+using MclTK.Graphics.Shaders;
+using MclTK.Window;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using OpenTK.Windowing.Common;
-using OpenTK.Windowing.Desktop;
 using OpenTK.Audio.OpenAL;
 
 namespace Tetris;
 
-public class Engine : GameWindow
+public class Engine
 {
-    private const float SQUARE_SIZE = 0.03f;
+    protected MclWindow win;
     
-    private readonly float[] verticiesBlock = new []
-    {
-        -SQUARE_SIZE,  SQUARE_SIZE,
-         SQUARE_SIZE, -SQUARE_SIZE,
-        -SQUARE_SIZE, -SQUARE_SIZE,
-        
-        -SQUARE_SIZE,  SQUARE_SIZE,
-         SQUARE_SIZE,  SQUARE_SIZE,
-         SQUARE_SIZE, -SQUARE_SIZE,
-    };
+    private const float SQUARE_SIZE = 0.03f;
     
     private readonly Dictionary<int, Vector3> COLOR_MAP = new Dictionary<int, Vector3>()
     {
@@ -35,12 +29,8 @@ public class Engine : GameWindow
         {10, new Vector3(0.0f, 0.0f, 0.0f)},
     };
 
-    private int shaderDefault;
+    private MclShaderDefault2D shaderDefault;
     private int blockVAO;
-    
-    private int ulColor;
-    private int ulModel;
-    private int ulProjj;
 
     private int idSoundMusic;
     
@@ -51,115 +41,46 @@ public class Engine : GameWindow
     
     protected int[,] Grid;
     
-    public Engine(int _gridWidth, int _gridHeight) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
+    public Engine(int _gridWidth, int _gridHeight)
     {
         gridWidth = _gridWidth;
         gridHeight = _gridHeight;
         gridHalfWidth = gridWidth / 2.0f;
         gridHalfHeight = gridHeight / 2.0f;
         Grid = new int[gridWidth,gridHeight];
+
+        win = new MclWindow();
+        win.Title = "Tetris";
+        win.FuncLoad = OnLoad;
+        win.FuncRender = OnRender;
     }
     
-    protected override void OnLoad()
+    private void OnLoad()
     {
-        base.OnLoad();
-        
-        CreateShader();
-        CreateBlockVAO();
-        
-        ulColor = GL.GetUniformLocation(shaderDefault, "color");
-        ulModel = GL.GetUniformLocation(shaderDefault, "model");
-        ulProjj = GL.GetUniformLocation(shaderDefault, "projj");
-        
-        InitializeAudio();
-        
-        string? appPath = Path.GetDirectoryName(Environment.ProcessPath);
-        appPath += "/../../.."; // Remove when building for release.
-        idSoundMusic = LoadAudio(appPath + "/Audio/Tetris4Mcl.wav");
+        shaderDefault = new MclShaderDefault2D();
+        shaderDefault.Use();
+
+        float[] blockMesh = MclGL.MakeRectangleMesh(SQUARE_SIZE, SQUARE_SIZE);
+        blockVAO = MclGL.CreateVAO(blockMesh, shaderDefault.handle);
+        GL.BindVertexArray(blockVAO);
+
+        string appPath = MclUtils.GetAppPath(false);
+        AudioData audioDataMusic = MclAL.ReadFile(appPath + "/Audio/Tetris4Mcl.wav");
+        idSoundMusic = MclAL.CreateSource(audioDataMusic);
         AL.Source(idSoundMusic, ALSourceb.Looping, true);
         AL.SourcePlay(idSoundMusic);
     }
     
-    private void CreateShader()
+    private void OnRender()
     {
-        const string vertexShaderSource =
-            "#version 330 core \n" +
-            "in vec2 vert;" +
-            "uniform mat4 model;" +
-            "uniform mat4 projj;" +
-            "void main(){" +
-            "gl_Position = vec4(vert, 0.0, 1.0) * model * projj;" +
-            "}";
-
-        const string fragmentShaderSource =
-            "#version 330 core \n" +
-            "out vec4 FragColor;" +
-            "uniform vec3 color;" +
-            "void main(){" +
-            "FragColor = vec4(color, 1.0f);" +
-            "}";
-        
-        int vertexShader = GL.CreateShader(ShaderType.VertexShader);
-        int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-        
-        GL.ShaderSource(vertexShader, vertexShaderSource);
-        GL.ShaderSource(fragmentShader, fragmentShaderSource);
-        
-        GL.CompileShader(vertexShader);
-        GL.CompileShader(fragmentShader);
-        
-        GL.GetShader(vertexShader, ShaderParameter.CompileStatus, out int succ1);
-        GL.GetShader(fragmentShader, ShaderParameter.CompileStatus, out int succ2);
-        
-        if (succ1 == 0) Console.WriteLine(GL.GetShaderInfoLog(vertexShader));
-        if (succ2 == 0) Console.WriteLine(GL.GetShaderInfoLog(fragmentShader));
-        
-        shaderDefault = GL.CreateProgram();
-
-        GL.AttachShader(shaderDefault, vertexShader);
-        GL.AttachShader(shaderDefault, fragmentShader);
-        
-        GL.LinkProgram(shaderDefault);
-        GL.GetProgram(shaderDefault, GetProgramParameterName.LinkStatus, out int succ3);
-        
-        if (succ3 == 0) Console.WriteLine(GL.GetProgramInfoLog(shaderDefault));
-        
-        GL.DetachShader(shaderDefault, vertexShader);
-        GL.DetachShader(shaderDefault, fragmentShader);
-        
-        GL.DeleteShader(fragmentShader);
-        GL.DeleteShader(vertexShader);
-    }
-    
-    private void CreateBlockVAO()
-    {
-        const int typeSize = sizeof(float); 
-        blockVAO = GL.GenVertexArray();
-        GL.BindVertexArray(blockVAO);
-        int VBO = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
-        GL.BufferData(BufferTarget.ArrayBuffer, verticiesBlock.Length * typeSize, verticiesBlock, BufferUsageHint.DynamicDraw);
-        int aVert = GL.GetAttribLocation(shaderDefault, "vert");
-        GL.VertexAttribPointer(aVert, 2, VertexAttribPointerType.Float, false, 2 * typeSize, 0);
-        GL.EnableVertexAttribArray(aVert);
-    }
-    
-    protected override void OnRenderFrame(FrameEventArgs e)
-    {
-        base.OnRenderFrame(e);
-        GL.Clear(ClearBufferMask.ColorBufferBit);
-        GL.UseProgram(shaderDefault);
-        
-        float aspectRatio = Size.X / (float)Size.Y;
+        float aspectRatio = win.MclAspectRatio;
         Matrix4 proj = Matrix4.CreateOrthographicOffCenter(-aspectRatio, aspectRatio, -1.0f, 1.0f, 1.0f, -1.0f);
-        GL.UniformMatrix4(ulProjj, true, ref proj);
+        shaderDefault.SetProjj(proj);
         
         for (int i = 0; i < gridWidth; i++)
         {
             for (int j = 0; j < gridHeight; j++) RenderBlock(i, j);
         }
-        
-        SwapBuffers();
     }
     
     private void RenderBlock(int _x, int _y)
@@ -170,89 +91,8 @@ public class Engine : GameWindow
         const float offset = (SQUARE_SIZE * 2.25f);
         pos *= offset;
         Matrix4 model = Matrix4.CreateTranslation(pos);
-        
-        GL.UniformMatrix4(ulModel, true, ref model);
-        GL.Uniform3(ulColor, color);
-        GL.BindVertexArray(blockVAO);
+        shaderDefault.SetModel(model);
+        shaderDefault.SetColor(color);
         GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
-    }
-        
-    protected override void OnFramebufferResize(FramebufferResizeEventArgs e)
-    {
-        base.OnFramebufferResize(e);
-        GL.Viewport(0, 0, e.Width, e.Height);
-    }
-    
-    protected override void OnUnload()
-    {
-        GL.DeleteProgram(shaderDefault);
-        AL.DeleteSource(idSoundMusic);
-        ShutdownAudio();
-    }
-
-    private void InitializeAudio()
-    {
-        ALDevice device = ALC.OpenDevice(null);
-        ALContext context = ALC.CreateContext(device, (int[])null);
-        ALC.MakeContextCurrent(context);
-    }
-    
-    private void ShutdownAudio()
-    {
-        ALContext context = ALC.GetCurrentContext();
-        ALDevice device = ALC.GetContextsDevice(context);
-        ALC.MakeContextCurrent(ALContext.Null);
-        ALC.DestroyContext(context);
-        ALC.CloseDevice(device);
-    }
-
-    private int LoadAudio(string _filename)
-    {
-        const string EX = "Invalid file format!";
-        
-        FileStream stream = File.Open(_filename, FileMode.Open);
-        BinaryReader reader = new BinaryReader(stream);
-        
-        string signature = new string(reader.ReadChars(4));
-        if (signature != "RIFF") throw new NotSupportedException(EX);
-
-        reader.ReadInt32();
-
-        string format = new string(reader.ReadChars(4));
-        if (format != "WAVE") throw new NotSupportedException(EX);
-            
-        string format_signature = new string(reader.ReadChars(4));
-        if (format_signature != "fmt ") throw new NotSupportedException(EX);
-
-        reader.ReadInt32();
-        reader.ReadInt16();
-        int num_channels = reader.ReadInt16();
-        int sample_rate = reader.ReadInt32();
-        reader.ReadInt32();
-        reader.ReadInt16();
-        int bits_per_sample = reader.ReadInt16();
-        
-        string data_signature = new string(reader.ReadChars(4));
-        if (data_signature != "data") throw new NotSupportedException(EX);
-
-        reader.ReadInt32();
-
-        ALFormat soundFormat;
-        switch (num_channels)
-        {
-            case 1: soundFormat = (bits_per_sample == 8 ? ALFormat.Mono8 : ALFormat.Mono16); break;
-            case 2: soundFormat = (bits_per_sample == 8 ? ALFormat.Stereo8 : ALFormat.Stereo16); break;
-            default: throw new NotSupportedException(EX);
-        }
-
-        byte[] data = reader.ReadBytes((int)reader.BaseStream.Length);
-        
-        int buffer = AL.GenBuffer();
-        int source = AL.GenSource();
-        AL.BufferData(buffer, soundFormat, ref data[0], data.Length * sizeof(byte), sample_rate);
-        AL.Source(source, ALSourcei.Buffer, buffer);
-        AL.DeleteBuffer(buffer);
-        
-        return source;
     }
 }

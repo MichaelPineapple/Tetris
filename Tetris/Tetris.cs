@@ -1,5 +1,4 @@
 using OpenTK.Mathematics;
-using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Tetris;
@@ -28,12 +27,11 @@ public class Tetris : Engine
     public Tetris() : base(GRID_WIDTH, GRID_HEIGHT)
     {
         Console.WriteLine("Hello, Tetris!");
-        Size = (700, 700);
-        Title = "Tetris";
-        UpdateFrequency = 30.0;
         GenerateGridBorder();
         ResetHand();
         SpawnTetrimino();
+        win.FuncUpdate = OnUpdate;
+        win.Run();
     }
 
     private void GenerateGridBorder()
@@ -46,29 +44,28 @@ public class Tetris : Engine
         }
     }
     
-    protected override void OnUpdateFrame(FrameEventArgs e)
+    private void OnUpdate(double dt)
     {
-        base.OnUpdateFrame(e);
+        KeyboardState keyboard = win.KeyboardState;
+        if (keyboard.IsKeyDown(Keys.Escape)) win.Close();
 
-        if (KeyboardState.IsKeyDown(Keys.Escape)) Close();
-
-        if (KeyboardState.IsKeyPressed(Keys.P)) paused = !paused;
+        if (keyboard.IsKeyPressed(Keys.P)) paused = !paused;
         
         if (paused) return;
         
-        if (KeyboardState.IsKeyPressed(Keys.Left)) ManuallyMoveHand(-1);
-        if (KeyboardState.IsKeyPressed(Keys.Right)) ManuallyMoveHand(1);
-        if (KeyboardState.IsKeyPressed(Keys.Up)) RotateHand();
-        if (KeyboardState.IsKeyPressed(Keys.Down)) Slam();
+        if (keyboard.IsKeyPressed(Keys.Left)) ManuallyMoveHand(-1);
+        if (keyboard.IsKeyPressed(Keys.Right)) ManuallyMoveHand(1);
+        if (keyboard.IsKeyPressed(Keys.Up)) RotateHand();
+        if (keyboard.IsKeyPressed(Keys.Down)) Slam();
         
-        timer += e.Time;
+        timer += dt;
         if (timer >= TICK_TIME)
         {
             OnTick();
             timer = 0.0f;
         }
 
-        if (clearEffectTimer > 0) clearEffectTimer -= e.Time;
+        if (clearEffectTimer > 0) clearEffectTimer -= dt;
         else
         {
             while (rowStack.Count > 0) ShiftDown(rowStack.Pop());
@@ -283,6 +280,6 @@ public class Tetris : Engine
 
     public static void Main(String[] args)
     {
-        new Tetris().Run();
+        _ = new Tetris();
     }
 }

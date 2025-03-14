@@ -15,4 +15,10 @@
       <Folder Include="Audio\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Reference Include="MclTK">
+        <HintPath>..\dep\MclTK.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>
